@@ -3,7 +3,8 @@
     "allow": [
       "Bash(dir:*)",
       "Bash(wc:*)",
-      "Bash(python predict.py:*)"
+      "Bash(python predict.py:*)",
+      "Bash(findstr:*)"
     ]
   }
 }
