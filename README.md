@@ -14,6 +14,20 @@ YOLOv8 Nano object detection model for detecting guitar pedals in images.
 pip install -r requirements.txt
 ```
 
+## Pre-trained Weights
+
+Download the pre-trained model to skip training:
+
+```bash
+# Download weights
+curl -L -o best.pt https://github.com/escobar-david/pedal_detector/releases/download/yolo-pedalboards/best.pt
+
+# Run inference
+python predict.py --source your_image.jpg --weights best.pt --save
+```
+
+Or download manually from [Releases](https://github.com/escobar-david/pedal_detector/releases).
+
 ### GPU Support
 
 For GPU acceleration, ensure you have CUDA installed. The training script will automatically use GPU if available.
@@ -148,13 +162,16 @@ Optimized for small dataset (165 images):
 - Early stopping: 20 epochs patience
 - Image size: 640x640
 
-## Expected Performance
+## Performance
 
-With this dataset size and configuration, expect:
-- **mAP50**: 0.7-0.9
-- **mAP50-95**: 0.5-0.7
+Trained on 139 images, validated on 25 images:
 
-Performance depends on image quality and annotation consistency.
+| Metric | Value |
+|--------|-------|
+| **mAP50** | 0.975 |
+| **mAP50-95** | 0.735 |
+| Precision | 0.941 |
+| Recall | 0.941 |
 
 ## Output
 
