@@ -56,21 +56,21 @@ def main():
             continue
 
         # Handle commands
-        if user_input.lower() in ('quit', 'q', 'exit'):
+        if user_input.lower() in ("quit", "q", "exit"):
             print("Goodbye!")
             break
 
-        if user_input.lower() == 'save on':
+        if user_input.lower() == "save on":
             save_results = True
             print("Saving results: ON")
             continue
 
-        if user_input.lower() == 'save off':
+        if user_input.lower() == "save off":
             save_results = False
             print("Saving results: OFF")
             continue
 
-        if user_input.lower().startswith('conf '):
+        if user_input.lower().startswith("conf "):
             try:
                 conf_threshold = float(user_input.split()[1])
                 print(f"Confidence threshold: {conf_threshold}")
@@ -88,8 +88,8 @@ def main():
             source=user_input,
             conf=conf_threshold,
             save=save_results,
-            device='cpu',
-            verbose=False
+            device="0",
+            verbose=False,
         )
 
         # Display results
@@ -104,7 +104,9 @@ def main():
                 for i, box in enumerate(boxes):
                     conf = box.conf[0].item()
                     x1, y1, x2, y2 = box.xyxy[0].tolist()
-                    print(f"  [{i+1}] {conf*100:.1f}% at ({int(x1)}, {int(y1)}, {int(x2)}, {int(y2)})")
+                    print(
+                        f"  [{i + 1}] {conf * 100:.1f}% at ({int(x1)}, {int(y1)}, {int(x2)}, {int(y2)})"
+                    )
 
             if save_results:
                 print(f"Saved to: runs/detect/predict/")

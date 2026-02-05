@@ -21,7 +21,7 @@ def parse_args():
                         help='IoU threshold for NMS')
     parser.add_argument('--imgsz', type=int, default=640,
                         help='Input image size')
-    parser.add_argument('--device', type=str, default='cpu',
+    parser.add_argument('--device', type=str, default='0',
                         help='CUDA device (0, 1, etc.) or "cpu"')
     parser.add_argument('--save', action='store_true',
                         help='Save results to runs/detect/predict')

@@ -4,7 +4,10 @@
       "Bash(dir:*)",
       "Bash(wc:*)",
       "Bash(python predict.py:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(pip install:*)",
+      "Bash(pip uninstall:*)",
+      "Bash(python -c:*)"
     ]
   }
 }
