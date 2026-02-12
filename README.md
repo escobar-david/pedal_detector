@@ -1,182 +1,108 @@
-# Guitar Pedal Detector
+﻿# Pedal Detector (YOLOv8)
 
-YOLOv8 Nano object detection model for detecting guitar pedals in images.
+Object detection pipeline for identifying guitar pedals in pedalboard photos using YOLOv8n.
 
-## Dataset
+This project focuses on a practical end-to-end ML workflow in Python: dataset preparation, reproducible training, CLI inference, and model export.
 
-- **Images**: 165 images
-- **Annotations**: 1,652 bounding boxes (~10 pedals per image)
-- **Format**: YOLO format (single class: `guitar_pedal`)
+## Why This Project
 
-## Installation
+- Real-world computer vision task on custom data.
+- Complete workflow from raw labels to inference artifacts.
+- Lightweight model choice for fast inference.
+
+## Results Snapshot
+
+Validation split: 25 images (trained on 139 images).
+
+| Metric | Value |
+|---|---:|
+| mAP@50 | 0.975 |
+| mAP@50-95 | 0.735 |
+| Precision | 0.941 |
+| Recall | 0.941 |
+
+## Quick Start
 
 ```bash
+git clone https://github.com/<your-user>/pedal_detector.git
+cd pedal_detector
+python -m venv .venv
+# Windows PowerShell
+.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 ```
 
-## Pre-trained Weights
-
-Download the pre-trained model to skip training:
+Download pretrained weights from GitHub Releases:
 
 ```bash
-# Download weights
 curl -L -o best.pt https://github.com/escobar-david/pedal_detector/releases/download/yolo-pedalboards/best.pt
-
-# Run inference
-python predict.py --source your_image.jpg --weights best.pt --save
+python predict.py --source my_pedals.jpg --weights best.pt --save
 ```
 
-Or download manually from [Releases](https://github.com/escobar-david/pedal_detector/releases).
+## Reproduce Training
 
-### GPU Support
+```bash
+python split_dataset.py
+python train.py --epochs 100 --batch 16 --imgsz 640 --device 0
+python predict.py --source my_pedals.jpg --weights runs/detect/pedal_detector/weights/best.pt --save
+```
 
-For GPU acceleration, ensure you have CUDA installed. The training script will automatically use GPU if available.
+CPU-only training:
 
-For CPU-only training, use:
 ```bash
 python train.py --device cpu
 ```
 
+## CLI Usage
+
+```bash
+python train.py --help
+python predict.py --help
+python interactive.py
+```
+
 ## Project Structure
 
-```
+```text
 pedal_detector/
-├── images/              # Original images (backup)
-├── labels/              # Original labels (backup)
-├── datasets/            # Split dataset (created by split_dataset.py)
-│   ├── train/
-│   │   ├── images/
-│   │   └── labels/
-│   └── val/
-│       ├── images/
-│       └── labels/
-├── runs/                # Training outputs
-├── data.yaml            # Dataset configuration
-├── train.py             # Training script
-├── predict.py           # Inference script
-├── split_dataset.py     # Dataset splitting utility
-└── requirements.txt     # Python dependencies
+|-- data.yaml
+|-- split_dataset.py
+|-- train.py
+|-- predict.py
+|-- interactive.py
+|-- requirements.txt
+|-- images/                # raw images (local/private by default)
+|-- labels/                # raw labels (local/private by default)
+|-- datasets/              # generated train/val split
+`-- runs/                  # training and inference outputs
 ```
 
-## Usage
+## Design Choices
 
-### 1. Split the Dataset
+- Model: YOLOv8n for speed and compact size.
+- Transfer learning from pretrained weights.
+- Augmentation tuned for small dataset:
+- HSV jitter
+- Horizontal flips
+- Moderate rotation (+/-10 degrees)
+- Mosaic and mixup
 
-First, split your dataset into training and validation sets:
+## Limitations
 
-```bash
-python split_dataset.py
-```
+- Single class only: `guitar_pedal`.
+- Small dataset size may reduce generalization.
+- No instance segmentation or pedal-type classification yet.
 
-This will:
-- Create an 85/15 train/val split
-- Copy files to `datasets/train/` and `datasets/val/`
-- Report any images missing labels
+## Roadmap
 
-### 2. Train the Model
+- Multi-class labels by pedal type.
+- Structured error analysis and evaluation reports.
+- Dockerized inference service.
 
-```bash
-python train.py
-```
+## Dataset and Rights
 
-#### Training Options
+Before publishing images/labels publicly, confirm you have redistribution rights for every photo and annotation.
 
-```bash
-python train.py --epochs 100 --batch 16 --imgsz 640 --device 0
-```
+## License
 
-| Argument | Default | Description |
-|----------|---------|-------------|
-| `--epochs` | 100 | Number of training epochs |
-| `--batch` | 16 | Batch size (reduce if OOM) |
-| `--imgsz` | 640 | Input image size |
-| `--device` | 0 | GPU device or "cpu" |
-| `--workers` | 8 | Data loader workers |
-| `--patience` | 20 | Early stopping patience |
-| `--resume` | - | Resume from checkpoint |
-
-### 3. Run Inference
-
-```bash
-# Single image
-python predict.py --source path/to/image.jpg --save
-
-# Directory of images
-python predict.py --source path/to/images/ --save
-
-# Show results
-python predict.py --source image.jpg --show
-
-# Adjust confidence threshold
-python predict.py --source image.jpg --conf 0.5 --save
-```
-
-#### Inference Options
-
-| Argument | Default | Description |
-|----------|---------|-------------|
-| `--source` | required | Image, directory, or video |
-| `--weights` | best.pt | Path to model weights |
-| `--conf` | 0.25 | Confidence threshold |
-| `--iou` | 0.45 | IoU threshold for NMS |
-| `--save` | - | Save annotated results |
-| `--show` | - | Display results |
-| `--save-txt` | - | Save labels as .txt |
-| `--save-crop` | - | Save cropped detections |
-
-### 4. Export Model
-
-For deployment, export the model to other formats:
-
-```python
-from predict import export_model
-
-# Export to ONNX
-export_model(format='onnx')
-
-# Export to TorchScript
-export_model(format='torchscript')
-
-# Export to TFLite
-export_model(format='tflite')
-```
-
-## Training Details
-
-### Model
-- **Architecture**: YOLOv8 Nano (fastest, smallest)
-- **Pretrained**: COCO weights for transfer learning
-
-### Augmentation
-Optimized for small dataset (165 images):
-- Color jittering (HSV)
-- Horizontal flip (no vertical - pedals have orientation)
-- Rotation (moderate, ±10°)
-- Scale variation
-- Mosaic augmentation
-- MixUp
-
-### Hyperparameters
-- Optimizer: AdamW
-- Initial LR: 0.001
-- Early stopping: 20 epochs patience
-- Image size: 640x640
-
-## Performance
-
-Trained on 139 images, validated on 25 images:
-
-| Metric | Value |
-|--------|-------|
-| **mAP50** | 0.975 |
-| **mAP50-95** | 0.735 |
-| Precision | 0.941 |
-| Recall | 0.941 |
-
-## Output
-
-Training outputs are saved to `runs/detect/pedal_detector/`:
-- `weights/best.pt` - Best model weights
-- `weights/last.pt` - Last epoch weights
-- Training curves and metrics
-- Validation predictions
+MIT. See `LICENSE`.
