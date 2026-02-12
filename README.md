@@ -21,6 +21,14 @@ Validation split: 25 images (trained on 139 images).
 | Precision | 0.941 |
 | Recall | 0.941 |
 
+## Example Prediction
+
+| Original | YOLOv8 Prediction |
+|---|---|
+| ![Original pedalboard](my_pedals.jpg) | ![Predicted pedalboard](runs/detect/predict/my_pedals.jpg) |
+
+Generated with: `python predict.py --source my_pedals.jpg --weights runs/detect/pedal_detector/weights/best.pt --conf 0.25 --iou 0.45 --save`.
+
 ## Quick Start
 
 ```bash
@@ -42,8 +50,8 @@ python predict.py --source my_pedals.jpg --weights best.pt --save
 ## Reproduce Training
 
 ```bash
-python split_dataset.py
-python train.py --epochs 100 --batch 16 --imgsz 640 --device 0
+python split_dataset.py --source-images images --source-labels labels --output-dir datasets --train-ratio 0.85 --seed 42
+python train.py --data data.yaml --epochs 100 --batch 16 --imgsz 640 --device 0 --seed 42 --project runs/detect --name pedal_detector
 python predict.py --source my_pedals.jpg --weights runs/detect/pedal_detector/weights/best.pt --save
 ```
 
@@ -58,8 +66,47 @@ python train.py --device cpu
 ```bash
 python train.py --help
 python predict.py --help
-python interactive.py
+python split_dataset.py --help
+python interactive.py --help
 ```
+
+### Common CLI examples
+
+Train with explicit run naming and seed:
+
+```bash
+python train.py --data data.yaml --epochs 50 --batch 16 --seed 123 --project runs/detect --name exp_seed123
+```
+
+Predict on CPU with custom thresholds:
+
+```bash
+python predict.py --source my_pedals.jpg --weights runs/detect/pedal_detector/weights/best.pt --device cpu --conf 0.3 --iou 0.45 --save
+```
+
+Run interactive mode on CPU and explicit weights:
+
+```bash
+python interactive.py --device cpu --weights runs/detect/pedal_detector/weights/best.pt
+```
+
+Split data with custom output and deterministic shuffle:
+
+```bash
+python split_dataset.py --source-images images --source-labels labels --output-dir datasets --train-ratio 0.9 --seed 7
+```
+
+### Notes
+
+- `predict.py` now exits with a non-zero code when `--source` or `--weights` is invalid.
+- `train.py` supports reproducible runs via `--seed` and portable output paths via `--project` and `--name`.
+
+### Exit codes
+
+- `train.py`: returns `0` on successful execution.
+- `split_dataset.py`: returns `0` on successful split, non-zero for invalid `--train-ratio` or missing source directories.
+- `predict.py`: returns `0` on successful inference, non-zero when input source or weights are missing/invalid.
+- `interactive.py`: returns `0` on normal session exit (`q`/`quit`/`exit`), non-zero if weights cannot be resolved at startup.
 
 ## Project Structure
 

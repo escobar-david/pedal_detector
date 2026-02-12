@@ -5,6 +5,13 @@ env/
 
 # Training outputs & models
 runs/
+!runs/
+runs/*
+!runs/detect/
+runs/detect/*
+!runs/detect/predict/
+runs/detect/predict/*
+!runs/detect/predict/my_pedals.jpg
 *.pt
 
 # Dataset (large files)
@@ -16,6 +23,11 @@ labels/
 __pycache__/
 *.py[cod]
 *.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
 
 # IDE
 .idea/

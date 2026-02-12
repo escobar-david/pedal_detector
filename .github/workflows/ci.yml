@@ -21,11 +21,15 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install ruff
+          pip install ruff pytest
 
-      - name: Ruff (non-blocking until cleanup)
-        run: ruff check . || true
+      - name: Ruff
+        run: ruff check .
 
       - name: Import smoke test
         run: |
           python -c "import train, predict, split_dataset, interactive; print('imports ok')"
+
+      - name: Pytest smoke checks
+        run: |
+          python -m pytest -q

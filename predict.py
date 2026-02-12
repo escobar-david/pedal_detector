@@ -5,11 +5,12 @@ Run predictions on images using the trained YOLOv8 model.
 """
 
 import argparse
+import sys
 from pathlib import Path
 from ultralytics import YOLO
 
 
-def parse_args():
+def parse_args(argv=None):
     parser = argparse.ArgumentParser(description='Run inference with trained pedal detector')
     parser.add_argument('--source', type=str, required=True,
                         help='Image file, directory, or video to run inference on')
@@ -31,18 +32,44 @@ def parse_args():
                         help='Save results as .txt files')
     parser.add_argument('--save-crop', action='store_true',
                         help='Save cropped detection boxes')
-    return parser.parse_args()
+    return parser.parse_args(argv)
 
 
-def main():
-    args = parse_args()
+def _is_non_file_source(source: str) -> bool:
+    source_lower = source.lower()
+    network_prefixes = ('http://', 'https://', 'rtsp://', 'rtmp://', 'tcp://')
+    if source_lower.startswith(network_prefixes):
+        return True
+    if source.isdigit():
+        return True
+    return any(char in source for char in ('*', '?', '[', ']'))
 
-    # Check if weights exist
-    weights_path = Path(args.weights)
+
+def validate_inputs(source: str, weights: str) -> None:
+    source_path = Path(source)
+    weights_path = Path(weights)
+
+    if not _is_non_file_source(source) and not source_path.exists():
+        raise FileNotFoundError(
+            f"Input source not found: {source_path}\n"
+            "Provide an existing local file/directory, a valid glob, URL, or webcam index."
+        )
+
     if not weights_path.exists():
-        print(f"Error: Model weights not found at {weights_path}")
-        print("Make sure you have trained the model first with: python train.py")
-        return
+        raise FileNotFoundError(
+            f"Model weights not found: {weights_path}\n"
+            "Train first with `python train.py` or pass `--weights /path/to/best.pt`."
+        )
+
+
+def main(argv=None):
+    args = parse_args(argv)
+
+    try:
+        validate_inputs(args.source, args.weights)
+    except FileNotFoundError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
 
     # Load the trained model
     print(f"Loading model from: {args.weights}")
@@ -94,7 +121,7 @@ def main():
     if args.save:
         print(f"Results saved to: runs/detect/predict/")
 
-    return results
+    return 0
 
 
 def export_model(weights_path: str = 'runs/detect/pedal_detector/weights/best.pt',
@@ -112,4 +139,4 @@ def export_model(weights_path: str = 'runs/detect/pedal_detector/weights/best.pt
 
 
 if __name__ == '__main__':
-    main()
+    raise SystemExit(main())

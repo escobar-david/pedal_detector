@@ -5,9 +5,9 @@ Splits the dataset into train/val sets while ensuring image-label pairs
 are kept together. Handles missing labels gracefully.
 """
 
-import os
 import shutil
 import random
+import argparse
 from pathlib import Path
 
 
@@ -128,33 +128,52 @@ def split_dataset(
     return stats
 
 
-def main():
-    # Define paths
-    project_root = Path(__file__).parent
-    source_images = project_root / 'images'
-    source_labels = project_root / 'labels'
-    output_dir = project_root / 'datasets'
+def parse_args(argv=None):
+    parser = argparse.ArgumentParser(description='Split image/label dataset into train and val sets')
+    parser.add_argument('--source-images', type=str, default='images',
+                        help='Directory containing source images')
+    parser.add_argument('--source-labels', type=str, default='labels',
+                        help='Directory containing source labels')
+    parser.add_argument('--output-dir', type=str, default='datasets',
+                        help='Output directory for train/val split')
+    parser.add_argument('--train-ratio', type=float, default=0.85,
+                        help='Train split ratio in range (0, 1)')
+    parser.add_argument('--seed', type=int, default=42,
+                        help='Random seed for reproducibility')
+    return parser.parse_args(argv)
 
-    # Verify source directories exist
+
+def main(argv=None):
+    args = parse_args(argv)
+    project_root = Path(__file__).parent
+    source_images = (project_root / args.source_images).resolve()
+    source_labels = (project_root / args.source_labels).resolve()
+    output_dir = (project_root / args.output_dir).resolve()
+
+    if not 0.0 < args.train_ratio < 1.0:
+        print(f"Error: --train-ratio must be between 0 and 1, got {args.train_ratio}")
+        return 1
+
     if not source_images.exists():
         print(f"Error: Images directory not found: {source_images}")
-        return
+        return 1
     if not source_labels.exists():
         print(f"Error: Labels directory not found: {source_labels}")
-        return
+        return 1
 
     # Split dataset
-    stats = split_dataset(
+    split_dataset(
         source_images=source_images,
         source_labels=source_labels,
         output_dir=output_dir,
-        train_ratio=0.85,
-        seed=42
+        train_ratio=args.train_ratio,
+        seed=args.seed
     )
 
     print(f"\nDataset ready at: {output_dir}")
     print("You can now run training with: python train.py")
+    return 0
 
 
 if __name__ == '__main__':
-    main()
+    raise SystemExit(main())

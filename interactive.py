@@ -3,37 +3,56 @@ Interactive Guitar Pedal Detection
 Loads model once and allows multiple predictions without reloading weights.
 """
 
-import os
+import argparse
+from pathlib import Path
 from ultralytics import YOLO
 
 
-def find_weights():
+def parse_args(argv=None):
+    parser = argparse.ArgumentParser(description='Interactive YOLOv8 pedal detector')
+    parser.add_argument('--device', type=str, default='0',
+                        help='CUDA device (0, 1, etc.) or "cpu"')
+    parser.add_argument('--weights', type=str, default='',
+                        help='Optional explicit path to model weights')
+    return parser.parse_args(argv)
+
+
+def find_weights(explicit_weights: str = ''):
     """Find the best.pt weights file."""
-    possible_paths = [
-        "best.pt",
-        "runs/detect/pedal_detector/weights/best.pt",
-        "runs/detect/runs/detect/pedal_detector/weights/best.pt",
-    ]
+    if explicit_weights:
+        explicit_path = Path(explicit_weights)
+        if explicit_path.exists():
+            return explicit_path
+        return None
+
+    possible_paths = (
+        Path("best.pt"),
+        Path("runs/detect/pedal_detector/weights/best.pt"),
+    )
     for path in possible_paths:
-        if os.path.exists(path):
+        if path.exists():
             return path
     return None
 
 
-def main():
+def main(argv=None):
+    args = parse_args(argv)
+
     print("=" * 60)
     print("Interactive Guitar Pedal Detector")
     print("=" * 60)
 
     # Find and load weights
-    weights_path = find_weights()
+    weights_path = find_weights(args.weights)
     if not weights_path:
-        print("Error: Could not find best.pt weights file.")
+        print("Error: Could not find model weights file.")
+        if args.weights:
+            print(f"Tried explicit --weights path: {args.weights}")
         print("Download from: https://github.com/escobar-david/pedal_detector/releases")
-        return
+        return 1
 
     print(f"Loading model from: {weights_path}")
-    model = YOLO(weights_path)
+    model = YOLO(str(weights_path))
     print("Model loaded! Ready for predictions.\n")
 
     print("Commands:")
@@ -79,7 +98,7 @@ def main():
             continue
 
         # Check if file exists
-        if not os.path.exists(user_input):
+        if not Path(user_input).exists():
             print(f"File not found: {user_input}")
             continue
 
@@ -88,7 +107,7 @@ def main():
             source=user_input,
             conf=conf_threshold,
             save=save_results,
-            device="0",
+            device=args.device,
             verbose=False,
         )
 
@@ -96,7 +115,7 @@ def main():
         for result in results:
             boxes = result.boxes
             num_detections = len(boxes)
-            filename = os.path.basename(user_input)
+            filename = Path(user_input).name
 
             print(f"\n{filename}: {num_detections} pedal(s) detected")
 
@@ -111,7 +130,8 @@ def main():
             if save_results:
                 print(f"Saved to: runs/detect/predict/")
         print()
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
