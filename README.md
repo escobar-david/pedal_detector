@@ -32,6 +32,41 @@ Baseline to best improvement:
 - mAP@50-95: +0.2922 (+66.1%)
 - F1: +0.2192 (+30.4%)
 
+## Error Analysis
+
+Method:
+- Evaluated `runs/detect/runs/detect/pedal_detector/weights/best.pt` on `datasets/val/images` (25 images, 239 GT boxes).
+- Analysis thresholds: inference `conf=0.25`, NMS IoU `0.45`, TP match IoU `>=0.5`.
+- Outputs saved to `runs/detect/error_analysis_summary.json`.
+
+Aggregate detection errors at the selected operating point:
+- TP: 231
+- FP: 51
+- FN: 8
+- Precision: 0.8191
+- Recall: 0.9665
+- F1: 0.8868
+
+Failure mode breakdown:
+
+| Failure mode | Count | Share | Mitigation priority |
+|---|---:|---:|---|
+| False positives on background/hardware | 41 | 80.4% of FP | Add hard negatives (boards/cables/knobs without pedals), raise confidence threshold for deployment profile |
+| Localization errors (0.1 <= IoU < 0.5 vs nearest GT) | 10 | 19.6% of FP | Add tighter-box label QA on dense scenes, increase dense-scene samples |
+| Missed medium objects (area ratio 1%-5%) | 6 | 75.0% of FN | Targeted augmentations for medium-scale crowded layouts |
+| Missed small objects (area ratio <1%) | 1 | 12.5% of FN | Add higher-resolution crops / close-up samples |
+| Missed large objects (area ratio >=5%) | 1 | 12.5% of FN | Add lighting/occlusion diversity for large pedals |
+
+Additional quality signal:
+- 22 / 231 matched detections (9.5%) had IoU < 0.75, indicating localization can still be tightened in cluttered scenes.
+
+Hardest validation images by total errors (FP + FN):
+- `images (82).jpg`: FP 5, FN 1
+- `ceOiSsG.jpg`: FP 5, FN 0
+- `A-Bass-Pedal-Setup-130720-small-finish.jpg`: FP 1, FN 3
+- `images (32).jpg`: FP 3, FN 1
+- `images (31).jpg`: FP 4, FN 0
+
 ## Example Prediction
 
 | Original | YOLOv8 Prediction |
