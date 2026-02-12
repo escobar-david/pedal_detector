@@ -149,6 +149,7 @@ pedal_detector/
 ## Dataset and Rights
 
 Before publishing images/labels publicly, confirm you have redistribution rights for every photo and annotation.
+Raw training data (`images/`, `labels/`, `datasets/`) is kept private in this project due to licensing constraints.
 
 ## License
 
